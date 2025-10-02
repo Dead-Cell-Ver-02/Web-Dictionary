@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\Project Building Guide\Web-Dictionary\fetcher\fetcher.cpp">
+      <Filter>fetcher</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Project Building Guide\Web-Dictionary\src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\Project Building Guide\Web-Dictionary\fetcher\fetcher.h">
+      <Filter>fetcher</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Project Building Guide\Web-Dictionary\ui\ui.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\Project Building Guide\Web-Dictionary\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="D:\Project Building Guide\Web-Dictionary\build\vcpkg_installed\x64-windows\share\nlohmann_json\nlohmann_json.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="fetcher">
+      <UniqueIdentifier>{4C7D8D09-D5B6-3C5E-8E2D-92933DC1AD5F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{7795F97B-4576-3A33-A736-10D8704EEF63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{57B800F0-FA01-3755-AD5E-F3ABD5E9240D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

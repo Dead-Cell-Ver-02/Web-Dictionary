@@ -20,9 +20,9 @@ add_executable(MyRaylibApp)
 # Find all source and header files recursively from the project root.
 # This will find src/main.cpp, fetcher/fetcher.h, fetcher/fetcher.cpp, and ui.h
 file(GLOB_RECURSE PROJECT_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
+    "src/*.cpp" "src/*.h"
+    "fetcher/*.cpp" "fetcher/*.h"
+    "ui/*.h"
 )
 
 # Add the collected source files to the executable target
@@ -44,7 +44,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(MyRaylibApp PRIVATE
     raylib
     cpr::cpr
-    nlohmann_json::nlohmann_json
+    nlohmann_json
 )
 
 # --- Compiler-Specific Options ---
@@ -55,6 +55,7 @@ if(MSVC)
         /WX # Treat warnings as errors
         /MP # Enable multi-threaded build
         /Zi # Enable program database for edit and continue
+        /utf-8
     )
 endif()
 
