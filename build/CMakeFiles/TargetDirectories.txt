@@ -1,3 +1,0 @@
-D:/Project Building Guide/Web-Dictionary/build/CMakeFiles/MyRaylibApp.dir
-D:/Project Building Guide/Web-Dictionary/build/CMakeFiles/ALL_BUILD.dir
-D:/Project Building Guide/Web-Dictionary/build/CMakeFiles/ZERO_CHECK.dir
