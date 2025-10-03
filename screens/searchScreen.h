@@ -40,6 +40,7 @@ private:
     Font titleFont;
     Font inputFont;
     Font subtitleFont;
+    Font buttonFont;
 
     // UI element pointers (for updates)
     TextElement* inputTextPtr;

@@ -292,7 +292,7 @@ struct ButtonElement : DrawElement {
     // Internal state
     Rectangle absoluteBounds;
     Vector2 textOffset{0, 0};
-    bool wasPressed{false};  // Track if button was pressed down on this button
+    bool wasPressed{false};
 
     // Constructors
     ButtonElement(std::string text, Rectangle rect, std::function<void()> callback = nullptr)
@@ -360,28 +360,23 @@ struct ButtonElement : DrawElement {
         bool isMouseDown = IsMouseButtonDown(MOUSE_LEFT_BUTTON);
         bool isMouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
-        // Handle mouse press - only set wasPressed if press started on this button
         if (isHovered && isMousePressed) {
             wasPressed = true;
             currentState = State::Pressed;
         }
-        // Handle mouse release - only trigger click if press started on this button
         else if (isMouseReleased) {
             if (wasPressed && isHovered && onClick) {
-                onClick();  // Valid click: pressed on button and released on button
+                onClick();
             }
             wasPressed = false;
             currentState = isHovered ? State::Hovered : State::Normal;
         }
-        // Handle continuous press state
         else if (wasPressed && isMouseDown) {
             currentState = State::Pressed;
         }
-        // Handle hover state
         else if (isHovered && !isMouseDown) {
             currentState = State::Hovered;
         }
-        // Default to normal state
         else {
             currentState = State::Normal;
         }
@@ -395,17 +390,13 @@ struct ButtonElement : DrawElement {
             bounds.height
         };
 
-        // Draw button background with rounded corners
         Color bgColor = getBackgroundColor();
         DrawRectangleRounded(drawRect, style.cornerRadius / bounds.height, 8, bgColor);
 
-        // Draw border
         if (style.borderThickness > 0) {
-            DrawRectangleRoundedLines(drawRect, style.cornerRadius / bounds.height, 8, 
-                                     style.borderColor);
+            DrawRectangleRoundedLines(drawRect, style.cornerRadius / bounds.height, 8, style.borderColor);
         }
 
-        // Draw text
         Color textColor = getTextColor();
         Vector2 textPos = {
             drawRect.x + textOffset.x,
@@ -496,6 +487,9 @@ struct Frame : DrawElement {
         }
     }
 
+    // Remove and transfer ownership - caller MUST take ownership
+    // If you want to just delete the child, use deleteChild() instead
+    [[nodiscard("Ownership must be taken or element will be destroyed")]]
     std::unique_ptr<DrawElement> removeChild(size_t index) {
         if (index >= Children.size()) {
             return nullptr;
@@ -506,6 +500,7 @@ struct Frame : DrawElement {
         return removed;
     }
 
+    [[nodiscard("Ownership must be taken or element will be destroyed")]]
     std::unique_ptr<DrawElement> removeChild(DrawElement* child) {
         auto it = std::find_if(Children.begin(), Children.end(),
             [child](const std::unique_ptr<DrawElement>& ptr) {
@@ -518,6 +513,28 @@ struct Frame : DrawElement {
             return removed;
         }
         return nullptr;
+    }
+
+    // Delete child immediately (clearer intent when you just want to remove)
+    void deleteChild(size_t index) {
+        if (index < Children.size()) {
+            Children.erase(Children.begin() + static_cast<long>(index));
+        }
+    }
+
+    void deleteChild(DrawElement* child) {
+        auto it = std::find_if(Children.begin(), Children.end(),
+            [child](const std::unique_ptr<DrawElement>& ptr) {
+                return ptr.get() == child;
+            });
+        
+        if (it != Children.end()) {
+            Children.erase(it);
+        }
+    }
+
+    void clearChildren() {
+        Children.clear();
     }
 
     [[nodiscard]] DrawElement* getChild(size_t index) const {
@@ -666,5 +683,8 @@ struct SpacerElement : public DrawElement {
         return std::make_unique<SpacerElement>(0.0f, height);
     }
 };
+
+// Backwards compatibility typedef
+using spacerElement = SpacerElement;
 
 #endif //UI_H

@@ -5,11 +5,13 @@
 constexpr int TITLE_SIZE = 72;
 constexpr int INPUT_SIZE = 128;
 constexpr int SUBTITLE_SIZE = 24;
+constexpr int BUTTON_SIZE = 32;
 
 // Font paths
 static const char *FONT_BYTESIZED5 = "D:/fonts/Bytesized/Bytesized-Regular.ttf";
 static const char *FONT_NOTO_SANS = "D:/fonts/Noto_Sans/static/NotoSans-SemiBold.ttf";
 static const char *FONT_MERRIWEATHER = "D:/fonts/Merriweather/static/Merriweather_24pt-Regular.ttf";
+static const char *FONT_BUTTON = "D:/fonts/Inter,Source_Code_Pro,Tiny5/Inter/static/Inter_18pt-BoldItalic.ttf"; // Button font
 
 // Colors
 constexpr Color BG_HEADER = Color{45, 20, 20, 255};
@@ -45,12 +47,16 @@ void searchScreen::loadFonts() {
 
     subtitleFont = LoadFontEx(FONT_MERRIWEATHER, SUBTITLE_SIZE, nullptr, 0);
     SetTextureFilter(subtitleFont.texture, TEXTURE_FILTER_POINT);
+    
+    buttonFont = LoadFontEx(FONT_BUTTON, BUTTON_SIZE, nullptr, 0);
+    SetTextureFilter(buttonFont.texture, TEXTURE_FILTER_POINT);
 }
 
 void searchScreen::unloadFonts() {
     UnloadFont(titleFont);
     UnloadFont(inputFont);
     UnloadFont(subtitleFont);
+    UnloadFont(buttonFont);
 }
 
 void searchScreen::buildUI() {
@@ -111,6 +117,11 @@ void searchScreen::buildUI() {
                 std::cout << "Searching for: " << searchQuery << "\n";
             }
         });
+    
+    // Set custom font for the button
+    searchButton->font = buttonFont; // Using dedicated button font
+    searchButton->useCustomFont = true;
+    
     searchButton->style.normalColor = Color{180, 100, 100, 255};
     searchButton->style.hoverColor = Color{200, 120, 120, 255};
     searchButton->style.pressedColor = Color{160, 80, 80, 255};
