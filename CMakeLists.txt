@@ -17,21 +17,34 @@ set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # Turn off C++20 modules
 # Add the executable target
 add_executable(MyRaylibApp)
 
-# Find all source and header files recursively from the project root.
-# This will find src/main.cpp, fetcher/fetcher.h, fetcher/fetcher.cpp, and ui.h
-file(GLOB_RECURSE PROJECT_SOURCES
-    "src/*.cpp" "src/*.h"
-    "fetcher/*.cpp" "fetcher/*.h"
-    "ui/*.h"
+# --- Best Practice: List all source files explicitly ---
+# This is more robust than GLOB. If you add a new file to your project,
+# you must add it to this list for CMake to see it.
+set(PROJECT_SOURCES
+    "src/main.cpp"
+    "fetcher/fetcher.cpp"
+    "fetcher/fetcher.h"
+    "ui/ui.h"
+    "screenManager/screenManager.cpp"
+    "screenManager/screenManager.h"
+    "screens/dataScreen.cpp"
+    "screens/dataScreen.h"
+    "screens/searchScreen.cpp"
+    "screens/searchScreen.h"
+    "screens/screen.h"
 )
 
 # Add the collected source files to the executable target
 target_sources(MyRaylibApp PRIVATE ${PROJECT_SOURCES})
 
-# Add include directories. Adding the project root allows you to use
-# #include "fetcher/fetcher.h" and #include "ui.h" directly.
+# --- Best Practice: Add specific include directories ---
+# This is safer than adding the entire project root.
 target_include_directories(MyRaylibApp PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    "src"
+    "fetcher"
+    "ui"
+    "screenManager"
+    "screens"
 )
 
 # --- Add Vcpkg Dependencies ---
@@ -44,7 +57,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(MyRaylibApp PRIVATE
     raylib
     cpr::cpr
-    nlohmann_json
+    nlohmann_json::nlohmann_json
 )
 
 # --- Compiler-Specific Options ---
@@ -66,3 +79,4 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT M
 
 # This command organizes the files in the Solution Explorer to match the folder structure on disk.
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${PROJECT_SOURCES})
+

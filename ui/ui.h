@@ -5,14 +5,15 @@
 #ifndef UI_H
 #define UI_H
 
+#include <algorithm>
+#include <functional>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
-#include <raylib.h>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
-#include <sstream>
-#include <algorithm>
+#include <raylib.h>
 
 // ============================================================================
 // UTILITY STRUCTURES
@@ -22,8 +23,10 @@ struct Padding {
     float top = 0, right = 0, bottom = 0, left = 0;
 
     Padding(float all = 0.0f) : top(all), right(all), bottom(all), left(all) {}
-    Padding(float vertical, float horizontal) : top(vertical), right(horizontal), bottom(vertical), left(horizontal) {}
-    Padding(float t, float r, float b, float l) : top(t), right(r), bottom(b), left(l) {}
+    Padding(float vertical, float horizontal) 
+        : top(vertical), right(horizontal), bottom(vertical), left(horizontal) {}
+    Padding(float t, float r, float b, float l) 
+        : top(t), right(r), bottom(b), left(l) {}
 
     [[nodiscard]] float totalHorizontal() const { return left + right; }
     [[nodiscard]] float totalVertical() const { return top + bottom; }
@@ -32,8 +35,9 @@ struct Padding {
 struct Margin {
     float top = 0, right = 0, bottom = 0, left = 0;
 
-    Margin(float all = 0) : top(all), right(all), bottom(all), left(all) {}
-    Margin(float t, float r, float b, float l) : top(t), right(r), bottom(b), left(l) {}
+    Margin(float all = 0.0f) : top(all), right(all), bottom(all), left(all) {}
+    Margin(float t, float r, float b, float l) 
+        : top(t), right(r), bottom(b), left(l) {}
 
     [[nodiscard]] float totalHorizontal() const { return left + right; }
     [[nodiscard]] float totalVertical() const { return top + bottom; }
@@ -54,18 +58,19 @@ struct Alignment {
 // BASE DRAWABLE ELEMENT
 // ============================================================================
 
-struct drawElement {
+struct DrawElement {
     Rectangle bounds;
 
-    drawElement() : bounds{ 0, 0, 0, 0 } {}
-    explicit drawElement(const Rectangle& rect) : bounds(rect) {}
-    virtual ~drawElement() = default;
+    DrawElement() : bounds{0, 0, 0, 0} {}
+    explicit DrawElement(const Rectangle& rect) : bounds(rect) {}
+    virtual ~DrawElement() = default;
 
     virtual void draw(Vector2 parentPos) = 0;
+    virtual void update(Vector2 parentPos) { (void)parentPos; }
     virtual void updateBounds() {}
 
     // Helper methods
-    [[nodiscard]] Vector2 getSize() const { return { bounds.width, bounds.height }; }
+    [[nodiscard]] Vector2 getSize() const { return {bounds.width, bounds.height}; }
     void setPosition(float x, float y) { bounds.x = x; bounds.y = y; }
     void setSize(float width, float height) { bounds.width = width; bounds.height = height; }
 };
@@ -74,15 +79,15 @@ struct drawElement {
 // TEXT ELEMENT - Optimized for Dictionary Usage
 // ============================================================================
 
-struct TextElement : drawElement {
+struct TextElement : DrawElement {
     std::string txt;
-    int fontSize{ 20 };  // Changed to int for consistency with raylib
-    Color color{ BLACK };
-    Vector2 offset{ 0, 0 };
+    int fontSize{20};
+    Color color{BLACK};
+    Vector2 offset{0, 0};
     Font font;
-    bool useCustomFont{ false };
-    bool useWrapText{ false };
-    float wrapLength = 0;
+    bool useCustomFont{false};
+    bool useWrapText{false};
+    float wrapLength = 0.0f;
 
     // Text wrapping properties
     std::vector<std::string> lines;
@@ -90,24 +95,22 @@ struct TextElement : drawElement {
     float characterSpacing = 1.0f;
 
     // Constructors
-    TextElement(std::string text, int fs, Color c, Vector2 off = { 0, 0 })
+    TextElement(std::string text, int fs, Color c, Vector2 off = {0, 0})
         : txt(std::move(text)), fontSize(fs), color(c), offset(off), font(GetFontDefault()) {
         calculateBounds();
     }
 
-    TextElement(std::string text, int fs, Color c, const Font& f, Vector2 off = { 0, 0 })
+    TextElement(std::string text, int fs, Color c, const Font& f, Vector2 off = {0, 0})
         : txt(std::move(text)), fontSize(fs), color(c), offset(off), font(f), useCustomFont(true) {
         calculateBounds();
     }
 
-    // Setter methods for dynamic updates
     void setText(const std::string& newText) {
         if (txt != newText) {
             txt = newText;
             if (useWrapText) {
                 wrap_text();
-            }
-            else {
+            } else {
                 calculateBounds();
             }
         }
@@ -122,13 +125,11 @@ struct TextElement : drawElement {
         useCustomFont = true;
         if (useWrapText) {
             wrap_text();
-        }
-        else {
+        } else {
             calculateBounds();
         }
     }
 
-    // FIXED: Correct text wrapping algorithm
     void wrap_text() {
         if (!useWrapText || wrapLength <= 0) return;
 
@@ -143,19 +144,16 @@ struct TextElement : drawElement {
                 return MeasureTextEx(font, line.c_str(), static_cast<float>(fontSize), characterSpacing).x;
             }
             return static_cast<float>(MeasureText(line.c_str(), fontSize));
-            };
+        };
 
         while (words >> word) {
-            // Build test line WITHOUT modifying currentLine yet
             std::string testLine = currentLine.empty() ? word : currentLine + " " + word;
             float testWidth = measureLineWidth(testLine);
 
             if (testWidth <= wrapLength || currentLine.empty()) {
-                // It fits! Now update currentLine
                 currentLine = testLine;
             }
             else {
-                // Doesn't fit - save current line and start new one
                 if (!currentLine.empty()) {
                     lines.push_back(currentLine);
                     bounds.width = std::max(bounds.width, measureLineWidth(currentLine));
@@ -163,7 +161,6 @@ struct TextElement : drawElement {
 
                 currentLine = word;
 
-                // Handle single words longer than wrap length
                 if (measureLineWidth(currentLine) > wrapLength) {
                     lines.push_back(currentLine);
                     bounds.width = std::max(bounds.width, measureLineWidth(currentLine));
@@ -172,13 +169,11 @@ struct TextElement : drawElement {
             }
         }
 
-        // Add the last line
         if (!currentLine.empty()) {
             lines.push_back(currentLine);
             bounds.width = std::max(bounds.width, measureLineWidth(currentLine));
         }
 
-        // Calculate total height with line spacing
         if (!lines.empty()) {
             bounds.height = static_cast<float>(lines.size()) * static_cast<float>(fontSize) +
                 (static_cast<float>(lines.size()) - 1.0f) * lineSpacing;
@@ -254,31 +249,233 @@ private:
 };
 
 // ============================================================================
+// BUTTON ELEMENT
+// ============================================================================
+
+struct ButtonElement : DrawElement {
+    enum class State {
+        Normal,
+        Hovered,
+        Pressed,
+        Disabled
+    };
+
+    struct Style {
+        Color normalColor{LIGHTGRAY};
+        Color hoverColor{GRAY};
+        Color pressedColor{DARKGRAY};
+        Color disabledColor{Color{200, 200, 200, 255}};
+        
+        Color textNormalColor{BLACK};
+        Color textHoverColor{BLACK};
+        Color textPressedColor{WHITE};
+        Color textDisabledColor{DARKGRAY};
+        
+        Color borderColor{DARKGRAY};
+        float borderThickness = 2.0f;
+        float cornerRadius = 5.0f;
+        
+        Padding padding{10.0f, 20.0f};
+    };
+
+    std::string label;
+    int fontSize{20};
+    Font font;
+    bool useCustomFont{false};
+    
+    Style style;
+    State currentState{State::Normal};
+    bool isEnabled{true};
+    
+    std::function<void()> onClick;
+    
+    // Internal state
+    Rectangle absoluteBounds;
+    Vector2 textOffset{0, 0};
+    bool wasPressed{false};  // Track if button was pressed down on this button
+
+    // Constructors
+    ButtonElement(std::string text, Rectangle rect, std::function<void()> callback = nullptr)
+        : DrawElement(rect), label(std::move(text)), font(GetFontDefault()), onClick(std::move(callback)) {
+        calculateTextOffset();
+    }
+
+    ButtonElement(std::string text, float width, float height, std::function<void()> callback = nullptr)
+        : DrawElement(Rectangle{0, 0, width, height}), label(std::move(text)), 
+          font(GetFontDefault()), onClick(std::move(callback)) {
+        calculateTextOffset();
+    }
+
+    // Auto-size button based on text
+    static std::unique_ptr<ButtonElement> createAutoSize(const std::string& text, int fontSize = 20, 
+                                                         const Padding& padding = Padding(10.0f, 20.0f),
+                                                         std::function<void()> callback = nullptr) {
+        float textWidth = static_cast<float>(MeasureText(text.c_str(), fontSize));
+        float width = textWidth + padding.totalHorizontal();
+        float height = static_cast<float>(fontSize) + padding.totalVertical();
+        
+        auto btn = std::make_unique<ButtonElement>(text, width, height, std::move(callback));
+        btn->fontSize = fontSize;
+        btn->style.padding = padding;
+        btn->calculateTextOffset();
+        return btn;
+    }
+
+    void setLabel(const std::string& newLabel) {
+        label = newLabel;
+        calculateTextOffset();
+    }
+
+    void setEnabled(bool enabled) {
+        isEnabled = enabled;
+        if (!enabled) {
+            currentState = State::Disabled;
+        }
+        else if (currentState == State::Disabled) {
+            currentState = State::Normal;
+        }
+    }
+
+    void setCallback(std::function<void()> callback) {
+        onClick = std::move(callback);
+    }
+
+    void update(Vector2 parentPos) override {
+        if (!isEnabled) {
+            currentState = State::Disabled;
+            wasPressed = false;
+            return;
+        }
+
+        absoluteBounds = {
+            parentPos.x + bounds.x,
+            parentPos.y + bounds.y,
+            bounds.width,
+            bounds.height
+        };
+
+        Vector2 mousePos = GetMousePosition();
+        bool isHovered = CheckCollisionPointRec(mousePos, absoluteBounds);
+        bool isMousePressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+        bool isMouseDown = IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+        bool isMouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
+
+        // Handle mouse press - only set wasPressed if press started on this button
+        if (isHovered && isMousePressed) {
+            wasPressed = true;
+            currentState = State::Pressed;
+        }
+        // Handle mouse release - only trigger click if press started on this button
+        else if (isMouseReleased) {
+            if (wasPressed && isHovered && onClick) {
+                onClick();  // Valid click: pressed on button and released on button
+            }
+            wasPressed = false;
+            currentState = isHovered ? State::Hovered : State::Normal;
+        }
+        // Handle continuous press state
+        else if (wasPressed && isMouseDown) {
+            currentState = State::Pressed;
+        }
+        // Handle hover state
+        else if (isHovered && !isMouseDown) {
+            currentState = State::Hovered;
+        }
+        // Default to normal state
+        else {
+            currentState = State::Normal;
+        }
+    }
+
+    void draw(Vector2 parentPos) override {
+        Rectangle drawRect = {
+            parentPos.x + bounds.x,
+            parentPos.y + bounds.y,
+            bounds.width,
+            bounds.height
+        };
+
+        // Draw button background with rounded corners
+        Color bgColor = getBackgroundColor();
+        DrawRectangleRounded(drawRect, style.cornerRadius / bounds.height, 8, bgColor);
+
+        // Draw border
+        if (style.borderThickness > 0) {
+            DrawRectangleRoundedLines(drawRect, style.cornerRadius / bounds.height, 8, 
+                                     style.borderColor);
+        }
+
+        // Draw text
+        Color textColor = getTextColor();
+        Vector2 textPos = {
+            drawRect.x + textOffset.x,
+            drawRect.y + textOffset.y
+        };
+
+        if (useCustomFont) {
+            DrawTextEx(font, label.c_str(), textPos, static_cast<float>(fontSize), 1.0f, textColor);
+        }
+        else {
+            DrawText(label.c_str(), static_cast<int>(textPos.x), static_cast<int>(textPos.y), 
+                    fontSize, textColor);
+        }
+    }
+
+private:
+    void calculateTextOffset() {
+        float textWidth = useCustomFont ? 
+            MeasureTextEx(font, label.c_str(), static_cast<float>(fontSize), 1.0f).x :
+            static_cast<float>(MeasureText(label.c_str(), fontSize));
+        
+        textOffset.x = (bounds.width - textWidth) * 0.5f;
+        textOffset.y = (bounds.height - static_cast<float>(fontSize)) * 0.5f;
+    }
+
+    Color getBackgroundColor() const {
+        switch (currentState) {
+            case State::Hovered: return style.hoverColor;
+            case State::Pressed: return style.pressedColor;
+            case State::Disabled: return style.disabledColor;
+            default: return style.normalColor;
+        }
+    }
+
+    Color getTextColor() const {
+        switch (currentState) {
+            case State::Hovered: return style.textHoverColor;
+            case State::Pressed: return style.textPressedColor;
+            case State::Disabled: return style.textDisabledColor;
+            default: return style.textNormalColor;
+        }
+    }
+};
+
+// ============================================================================
 // FRAME - Enhanced for Dictionary Layout
 // ============================================================================
 
-struct Frame : drawElement {
-    Color color{ LIGHTGRAY };
+struct Frame : DrawElement {
+    Color color{LIGHTGRAY};
     Padding padding;
     Margin margin;
     Alignment align;
 
     enum class Layout { Overlay, Vertical, Horizontal };
-    Layout layoutMode{ Layout::Overlay };
-    float spacing{ 10.0f };
+    Layout layoutMode{Layout::Overlay};
+    float spacing{10.0f};
 
-    std::vector<std::unique_ptr<drawElement>> Children;
+    std::vector<std::unique_ptr<DrawElement>> Children;
     Rectangle drawArea;
 
     Frame(Rectangle rect, Color c = LIGHTGRAY, Padding p = {},
-        Margin m = {}, Alignment a = {})
-        : drawElement(rect), color(c), padding(p), margin(m), align(a),
-        drawArea{
-            rect.x + p.left,
-            rect.y + p.top,
-            rect.width - p.totalHorizontal(),
-            rect.height - p.totalVertical()
-        } {
+          Margin m = {}, Alignment a = {})
+        : DrawElement(rect), color(c), padding(p), margin(m), align(a),
+          drawArea{
+              rect.x + p.left,
+              rect.y + p.top,
+              rect.width - p.totalHorizontal(),
+              rect.height - p.totalVertical()
+          } {
     }
 
     ~Frame() override = default;
@@ -293,41 +490,37 @@ struct Frame : drawElement {
         return drawArea;
     }
 
-    // FIXED: Consistent smart pointer interface
-    void AddChild(std::unique_ptr<drawElement> child) {
+    void AddChild(std::unique_ptr<DrawElement> child) {
         if (child) {
             Children.push_back(std::move(child));
         }
     }
 
-    // FIXED: Return ownership when removing
-    std::unique_ptr<drawElement> removeChild(size_t index) {
+    std::unique_ptr<DrawElement> removeChild(size_t index) {
         if (index >= Children.size()) {
             return nullptr;
         }
 
-        std::unique_ptr<drawElement> removed = std::move(Children[index]);
+        std::unique_ptr<DrawElement> removed = std::move(Children[index]);
         Children.erase(Children.begin() + static_cast<long>(index));
         return removed;
     }
 
-    // FIXED: Remove by pointer - safer version
-    std::unique_ptr<drawElement> removeChild(drawElement* child) {
+    std::unique_ptr<DrawElement> removeChild(DrawElement* child) {
         auto it = std::find_if(Children.begin(), Children.end(),
-            [child](const std::unique_ptr<drawElement>& ptr) {
+            [child](const std::unique_ptr<DrawElement>& ptr) {
                 return ptr.get() == child;
             });
 
         if (it != Children.end()) {
-            std::unique_ptr<drawElement> removed = std::move(*it);
+            std::unique_ptr<DrawElement> removed = std::move(*it);
             Children.erase(it);
             return removed;
         }
         return nullptr;
     }
 
-    // Get raw pointer to child (for reading only)
-    [[nodiscard]] drawElement* getChild(size_t index) const {
+    [[nodiscard]] DrawElement* getChild(size_t index) const {
         if (index < Children.size()) {
             return Children[index].get();
         }
@@ -338,8 +531,28 @@ struct Frame : drawElement {
         return Children.size();
     }
 
+    void update(Vector2 parentPos) override {
+        Rectangle frameBounds = {
+            parentPos.x + bounds.x + margin.left,
+            parentPos.y + bounds.y + margin.top,
+            bounds.width - margin.totalHorizontal(),
+            bounds.height - margin.totalVertical()
+        };
+
+        if (layoutMode == Layout::Overlay) {
+            for (auto& child : Children) {
+                child->update({
+                    frameBounds.x + child->bounds.x,
+                    frameBounds.y + child->bounds.y
+                });
+            }
+        }
+        else {
+            processStackedChildren(parentPos, true);
+        }
+    }
+
     void draw(Vector2 parentPos) override {
-        // Draw frame background
         Rectangle frameBounds = {
             parentPos.x + bounds.x + margin.left,
             parentPos.y + bounds.y + margin.top,
@@ -354,22 +567,21 @@ struct Frame : drawElement {
             drawOverlayChildren(frameBounds);
         }
         else {
-            drawStackedChildren(parentPos);
+            processStackedChildren(parentPos, false);
         }
     }
 
 private:
-    // FIXED: Removed const (draw() is non-const)
     void drawOverlayChildren(const Rectangle& frameBounds) {
         for (auto& child : Children) {
             child->draw({
                 frameBounds.x + child->bounds.x,
                 frameBounds.y + child->bounds.y
-                });
+            });
         }
     }
 
-    void drawStackedChildren(Vector2 parentPos) {
+    void processStackedChildren(Vector2 parentPos, bool isUpdate) {
         Rectangle contentArea = getDrawArea(parentPos);
         float currentX = contentArea.x;
         float currentY = contentArea.y;
@@ -377,25 +589,22 @@ private:
         for (size_t i = 0; i < Children.size(); ++i) {
             auto& child = Children[i];
 
-            // Auto-width for text wrapping
             if (child->bounds.width <= 0.0f) {
                 child->bounds.width = contentArea.width;
                 child->updateBounds();
             }
 
             Vector2 childPos = calculateChildPosition(child.get(), contentArea, currentX, currentY);
-            child->draw(childPos);
+            isUpdate ? child->update(childPos) : child->draw(childPos);
 
-            // Update position for next child
             updateStackPosition(child.get(), currentX, currentY, i < Children.size() - 1);
         }
     }
 
-    [[nodiscard]] Vector2 calculateChildPosition(const drawElement* child, const Rectangle& contentArea,
+    [[nodiscard]] Vector2 calculateChildPosition(const DrawElement* child, const Rectangle& contentArea,
         float stackX, float stackY) const {
         Vector2 pos = { stackX, stackY };
 
-        // Apply alignment based on layout mode
         if (layoutMode == Layout::Vertical) {
             switch (align.hAlign) {
             case Alignment::Horizontal::Center:
@@ -424,7 +633,7 @@ private:
         return pos;
     }
 
-    void updateStackPosition(const drawElement* child, float& currentX, float& currentY, bool hasNext) const {
+    void updateStackPosition(const DrawElement* child, float& currentX, float& currentY, bool hasNext) const {
         if (layoutMode == Layout::Vertical) {
             currentY += child->bounds.height;
             if (hasNext) currentY += spacing;
@@ -440,30 +649,22 @@ private:
 // SPACER ELEMENT
 // ============================================================================
 
-// ============================================================================
-// SPACER ELEMENT
-// ============================================================================
-
-struct spacerElement : public drawElement {
-    spacerElement(float w, float h) {
-        bounds = { 0, 0, w, h };
+struct SpacerElement : public DrawElement {
+    SpacerElement(float w, float h) {
+        bounds = {0, 0, w, h};
     }
 
     void draw(Vector2 parentPos) override {
-        // Spacers are invisible - they just occupy space
         (void)parentPos;
     }
 
-    // FIXED: Return smart pointers
-    static std::unique_ptr<spacerElement> createHorizontal(float width) {
-        // --- FIX WAS HERE --- Changed 0 to 0.0f
-        return std::make_unique<spacerElement>(width, 0.0f);
+    static std::unique_ptr<SpacerElement> createHorizontal(float width) {
+        return std::make_unique<SpacerElement>(width, 0.0f);
     }
 
-    static std::unique_ptr<spacerElement> createVertical(float height) {
-        // --- FIX WAS HERE --- Changed 0 to 0.0f
-        return std::make_unique<spacerElement>(0.0f, height);
+    static std::unique_ptr<SpacerElement> createVertical(float height) {
+        return std::make_unique<SpacerElement>(0.0f, height);
     }
 };
 
-#endif //DICTIONARY_DESIGN_H
+#endif //UI_H

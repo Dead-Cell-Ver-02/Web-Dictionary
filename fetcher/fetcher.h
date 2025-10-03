@@ -27,8 +27,7 @@
 #include <vector>
 
 // A struct to hold all the parsed data for a word.
-struct WordData
-{
+struct WordData {
     std::string word;
     std::string phonetic;
     std::vector<std::string> posList;
