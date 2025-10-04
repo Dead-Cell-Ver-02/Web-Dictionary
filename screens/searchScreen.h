@@ -44,6 +44,7 @@ private:
 
     // UI element pointers (for updates)
     TextElement* inputTextPtr;
+    Frame* inputFramePtr;
 
     void buildUI();
     void loadFonts();

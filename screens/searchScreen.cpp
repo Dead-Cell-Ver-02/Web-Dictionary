@@ -3,7 +3,7 @@
 
 // Font Sizes
 constexpr int TITLE_SIZE = 72;
-constexpr int INPUT_SIZE = 128;
+constexpr int INPUT_SIZE = 48; 
 constexpr int SUBTITLE_SIZE = 24;
 constexpr int BUTTON_SIZE = 32;
 
@@ -95,9 +95,10 @@ void searchScreen::buildUI() {
     auto inputFrame = std::make_unique<Frame>(
         Rectangle{0, 0, 600, 80},
         INPUT_BG,
-        Padding(20, 15)
+        Padding(15, 20) // Added proper padding for input text
     );
     inputFrame->layoutMode = Frame::Layout::Vertical;
+    inputFrame->align = {Alignment::Horizontal::Left, Alignment::Vertical::Center};
 
     auto inputText = std::make_unique<TextElement>(
         searchQuery.empty() ? "" : searchQuery,
@@ -107,6 +108,7 @@ void searchScreen::buildUI() {
     inputText->font = inputFont;
     inputText->useCustomFont = true;
     inputTextPtr = inputText.get();
+    inputFramePtr = inputFrame.get();
 
     inputFrame->AddChild(std::move(inputText));
 
@@ -183,9 +185,11 @@ void searchScreen::draw() {
     rootFrame->draw({0, 0});
 
     if (isInputActive && showCursor && inputTextPtr) {
-        Vector2 textSize = MeasureTextEx(inputFont, searchQuery.c_str(), 48.0f, 1.0f);
-        float cursorX = (screenWidth - 600) / 2 + 20 + textSize.x + 5;
-        float cursorY = screenHeight / 2 - 40 + 20;
-        DrawRectangle(static_cast<int>(cursorX), static_cast<int>(cursorY), 3, 48, TEXT_PRIMARY);
+        Vector2 textSize = MeasureTextEx(inputFont, searchQuery.c_str(), static_cast<float>(INPUT_SIZE), 1.0f);
+        
+                float cursorX = 500 + textSize.x + 20;
+                float cursorY = 215;
+        
+        DrawRectangle(static_cast<int>(cursorX), static_cast<int>(cursorY), 2, INPUT_SIZE, TEXT_PRIMARY);
     }
 }

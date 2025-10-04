@@ -75,11 +75,14 @@ void dataScreen::buildUI(const WordData& data) {
     topBar->layoutMode = Frame::Layout::Horizontal;
     topBar->align = Alignment{Alignment::Horizontal::Left, Alignment::Vertical::Center};
 
-    auto backButton = ButtonElement::createAutoSize("← Back", 24, Padding(10.0f, 20.0f),
+    auto backButton = ButtonElement::createAutoSize("< Back", 24, Padding(10.0f, 20.0f),
         [this]() {
             shouldGoBack = true;
             std::cout << "prev screen \n";
         });
+
+    backButton->font = posFont;
+    backButton->useCustomFont = true;
     backButton->style.normalColor = Color{70, 35, 35, 255};
     backButton->style.hoverColor = Color{90, 45, 45, 255};
     backButton->style.pressedColor = Color{50, 25, 25, 255};
